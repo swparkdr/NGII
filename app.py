@@ -4,18 +4,16 @@ import requests
 from bs4 import BeautifulSoup
 import streamlit as st
 
-API_KEY = "lhs0623"
-
-law_dict = {
-    "공간정보의 구축 및 관리 등에 관한 법률": "20341",
-    "공간정보의 구축 및 관리 등에 관한 법률 시행령": "35246",
-    "공간정보의 구축 및 관리 등에 관한 법률 시행규칙": "01387",
-    "국가공간정보 기본법": "154971",
-    "국가공간정보 기본법 시행령": "35246",
-    "공간정보산업 진흥법": "17453",
-    "공간정보산업 진흥법 시행령": "32541",
-    "공간정보산업 진흥법 시행규칙": "00210"
-}
+law_list = [
+    "공간정보의 구축 및 관리 등에 관한 법률",
+    "공간정보의 구축 및 관리 등에 관한 법률 시행령",
+    "공간정보의 구축 및 관리 등에 관한 법률 시행규칙",
+    "국가공간정보 기본법",
+    "국가공간정보 기본법 시행령",
+    "공간정보산업 진흥법",
+    "공간정보산업 진흥법 시행령",
+    "공간정보산업 진흥법 시행규칙"
+]
 
 rule_list = [
     "국토지리정보원 기본운영규정",
@@ -25,20 +23,19 @@ rule_list = [
     "3차원국토공간정보구축작업규정"
 ]
 
-# 법령 API에서 진짜 링크 가져오기 (html.parser 버전)
-def get_law_url(mst_id):
-    url = f"https://www.law.go.kr/DRF/lawService.do?OC={API_KEY}&target=law&type=XML&mst={mst_id}"
-    response = requests.get(url)
-    if response.status_code != 200:
+# 법령명으로 검색 후 첫 번째 검색 결과 링크 크롤링
+def crawl_law_url(law_name):
+    url = "https://www.law.go.kr/lsSc.do"
+    params = {"menuId": 1, "query": law_name}
+    resp = requests.get(url, params=params)
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    link = soup.select_one("a[href*='lsInfoP.do']")
+    if not link:
         return None
 
-    soup = BeautifulSoup(response.content, "html.parser")
-    link_tag = soup.find("법령상세링크")
-
-    if link_tag:
-        return link_tag.text
-    else:
-        return None
+    law_url = "https://www.law.go.kr" + link['href']
+    return law_url
 
 # 행정규칙 크롤링 함수
 def crawl_rule_info(rule_name):
@@ -71,19 +68,18 @@ def load_history(name):
             return f.read()
     return None
 
-st.set_page_config(page_title="NGII Law Keeper - 파서 수정 버전", layout="wide")
-st.title("📚 NGII Law Keeper - 파서 수정 버전")
+st.set_page_config(page_title="NGII Law Keeper - 웹 크롤링 최종 버전", layout="wide")
+st.title("📚 NGII Law Keeper - 웹 크롤링 최종 버전")
 
 option = st.radio("🔎 추적할 항목을 선택하세요:", ("법령 추적", "행정규칙 추적"))
 
 if option == "법령 추적":
-    st.subheader("📜 법령 추적 (API에서 정확한 링크 추출)")
-    selected_law = st.selectbox("법령 선택", list(law_dict.keys()))
+    st.subheader("📜 법령 추적 (웹 크롤링 기반 링크 제공)")
+    selected_law = st.selectbox("법령 선택", law_list)
 
     if st.button("법령 추적 시작"):
         with st.spinner("법령을 추적하는 중입니다..."):
-            mst_id = law_dict[selected_law]
-            law_url = get_law_url(mst_id)
+            law_url = crawl_law_url(selected_law)
             if law_url:
                 st.success(f"✅ {selected_law} 추적이 완료되었습니다!")
                 st.markdown(f'<a href="{law_url}" target="_blank">'
