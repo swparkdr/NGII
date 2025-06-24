@@ -24,20 +24,14 @@ rule_list = [
     "3차원국토공간정보구축작업규정"
 ]
 
-# 법령 API에서 본문 가져오기
-def fetch_law_text(mst_id):
-    url = f"https://www.law.go.kr/DRF/lawService.do?OC={API_KEY}&target=law&type=XML&mst={mst_id}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.text
-    else:
-        return None
-
-# 행정규칙 크롤링
+# 행정규칙 크롤링 (User-Agent 적용)
 def crawl_rule_info(rule_name):
     url = "https://www.law.go.kr/admRulSc.do"
     params = {"query": rule_name}
-    resp = requests.get(url, params=params)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"
+    }
+    resp = requests.get(url, params=params, headers=headers)
     soup = BeautifulSoup(resp.text, "html.parser")
 
     link = soup.select_one("a[href*='admRulLsInfoP.do']")
@@ -45,13 +39,22 @@ def crawl_rule_info(rule_name):
         return None
 
     detail_url = "https://www.law.go.kr" + link['href']
-    detail = requests.get(detail_url)
+    detail = requests.get(detail_url, headers=headers)
     dsoup = BeautifulSoup(detail.text, "html.parser")
 
     title = dsoup.select_one(".law_view_title").get_text(strip=True)
     history = dsoup.select_one(".history_list li").get_text(strip=True)
 
     return {"name": title, "history": history}
+
+# 법령 본문 API
+def fetch_law_text(mst_id):
+    url = f"https://www.law.go.kr/DRF/lawService.do?OC={API_KEY}&target=law&type=XML&mst={mst_id}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.text
+    else:
+        return None
 
 def save_history(name, history):
     with open(f"{name}_history.txt", "w", encoding="utf-8") as f:
@@ -75,8 +78,8 @@ def load_law_text(name):
             return f.read()
     return None
 
-st.set_page_config(page_title="NGII Law Keeper - 변경 여부만 표시", layout="wide")
-st.title("📚 NGII Law Keeper - 변경 여부만 표시 버전")
+st.set_page_config(page_title="NGII Law Keeper - User-Agent 버전", layout="wide")
+st.title("📚 NGII Law Keeper - User-Agent 적용 최종 버전")
 
 option = st.radio("🔎 추적할 항목을 선택하세요:", ("법령 추적", "행정규칙 추적"))
 
@@ -106,7 +109,7 @@ if option == "법령 추적":
                 st.error("❌ 법령 본문을 불러오지 못했습니다.")
 
 elif option == "행정규칙 추적":
-    st.subheader("📑 행정규칙 추적 (변경 여부만 표시)")
+    st.subheader("📑 행정규칙 추적 (User-Agent 적용)")
     selected_rule = st.selectbox("행정규칙 선택", rule_list)
 
     if st.button("행정규칙 추적 시작"):
