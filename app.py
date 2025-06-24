@@ -24,19 +24,20 @@ rule_list = [
     "3차원국토공간정보구축작업규정"
 ]
 
-# 법령 URL 크롤링 함수
-def crawl_law_url(law_name):
-    url = "https://www.law.go.kr/lsSc.do"
-    params = {"menuId": 1, "query": law_name}
-    resp = requests.get(url, params=params)
-    soup = BeautifulSoup(resp.text, "html.parser")
-
-    link = soup.select_one("a[href*='lsInfoP.do']")
-    if not link:
+# 법령 API 링크 가져오기
+def get_law_url(law_name):
+    url = f"https://www.law.go.kr/DRF/lawSearch.do?OC={API_KEY}&target=law&type=XML&query={law_name}"
+    response = requests.get(url)
+    if response.status_code != 200:
         return None
 
-    law_url = "https://www.law.go.kr" + link['href']
-    return law_url
+    soup = BeautifulSoup(response.content, "xml")
+    link_tag = soup.find("법령상세링크")
+
+    if link_tag:
+        return link_tag.text
+    else:
+        return None
 
 # 행정규칙 크롤링 함수
 def crawl_rule_info(rule_name):
@@ -69,18 +70,18 @@ def load_history(name):
             return f.read()
     return None
 
-st.set_page_config(page_title="NGII Law Keeper - 최종 링크 버전", layout="wide")
-st.title("📚 NGII Law Keeper - 최종 링크 버전")
+st.set_page_config(page_title="NGII Law Keeper - API 링크 버전", layout="wide")
+st.title("📚 NGII Law Keeper - API 링크 버전")
 
 option = st.radio("🔎 추적할 항목을 선택하세요:", ("법령 추적", "행정규칙 추적"))
 
 if option == "법령 추적":
-    st.subheader("📜 법령 추적 (정확한 웹 링크 제공)")
+    st.subheader("📜 법령 추적 (API 링크 제공)")
     selected_law = st.selectbox("법령 선택", law_list)
 
     if st.button("법령 추적 시작"):
         with st.spinner("법령을 추적하는 중입니다..."):
-            law_url = crawl_law_url(selected_law)
+            law_url = get_law_url(selected_law)
             if law_url:
                 st.success(f"✅ {selected_law} 추적이 완료되었습니다!")
                 st.markdown(f'<a href="{law_url}" target="_blank">'
