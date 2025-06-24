@@ -103,3 +103,55 @@ def track_laws():
 
 if __name__ == "__main__":
     track_laws()
+
+def track_laws():
+    print("\n📥 법령 목록 불러오는 중...")
+    law_list = fetch_law_list()
+    print(f"📄 총 {len(law_list)}건의 법령을 불러왔습니다.")
+
+    if not law_list:
+        print("❌ 법령 목록이 비어 있습니다. API 호출 실패 또는 네트워크 문제입니다.")
+        return
+
+    # 법령명 리스트 확인
+    print("\n✅ 불러온 법령명 샘플 (상위 5개):")
+    for law in law_list[:5]:
+        law_name = law.find("법령명한글").text.strip()
+        print(f"- {law_name}")
+
+    tracked_laws = {}
+
+    for law in law_list:
+        law_name = law.find("법령명한글").text.strip()
+        mst_id = law.find("법령일련번호").text.strip()
+
+        if any(target in law_name for target in target_laws):
+            tracked_laws[law_name] = mst_id
+
+    print(f"\n🔎 추적할 법령 수: {len(tracked_laws)}")
+
+    if len(tracked_laws) == 0:
+        print("⚠️ 필터링된 법령이 없습니다. 키워드를 다시 확인하세요.")
+        return
+
+    for law_name, mst_id in tracked_laws.items():
+        print(f"\n📋 {law_name} 추적 중...")
+        new_text = fetch_law_text(mst_id)
+
+        if new_text:
+            old_text = load_law_text(law_name)
+
+            if old_text:
+                if old_text != new_text:
+                    print(f"🚨 {law_name} 변경 사항 발견!")
+                    law_name, law_date, summary = summarize_law(new_text)
+                    print(f"📅 개정일: {law_date}")
+                    print(f"📝 요약: {summary}")
+                    save_law_text(law_name, new_text)
+                else:
+                    print(f"✅ {law_name} 변경 사항 없음.")
+            else:
+                print(f"📂 {law_name} 첫 저장 완료.")
+                save_law_text(law_name, new_text)
+        else:
+            print(f"❌ {law_name} 본문 불러오기 실패.")
