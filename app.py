@@ -1,3 +1,4 @@
+
 import os
 import requests
 from bs4 import BeautifulSoup
@@ -24,14 +25,14 @@ rule_list = [
     "3차원국토공간정보구축작업규정"
 ]
 
-# 법령 API에서 진짜 링크 가져오기
+# 법령 API에서 진짜 링크 가져오기 (html.parser 버전)
 def get_law_url(mst_id):
     url = f"https://www.law.go.kr/DRF/lawService.do?OC={API_KEY}&target=law&type=XML&mst={mst_id}"
     response = requests.get(url)
     if response.status_code != 200:
         return None
 
-    soup = BeautifulSoup(response.content, "xml")
+    soup = BeautifulSoup(response.content, "html.parser")
     link_tag = soup.find("법령상세링크")
 
     if link_tag:
@@ -70,8 +71,8 @@ def load_history(name):
             return f.read()
     return None
 
-st.set_page_config(page_title="NGII Law Keeper - 정확한 법령 링크 버전", layout="wide")
-st.title("📚 NGII Law Keeper - 정확한 법령 링크 버전")
+st.set_page_config(page_title="NGII Law Keeper - 파서 수정 버전", layout="wide")
+st.title("📚 NGII Law Keeper - 파서 수정 버전")
 
 option = st.radio("🔎 추적할 항목을 선택하세요:", ("법령 추적", "행정규칙 추적"))
 
