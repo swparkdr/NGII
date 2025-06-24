@@ -101,8 +101,8 @@ if option == "법령 추적":
     st.subheader("📜 법령 추적 (고급 요약 + 개정일 추출)")
     selected_law = st.selectbox("법령 선택", list(law_dict.keys()))
 
-   if st.button("법령 추적 시작"):
-    with st.spinner("법령을 추적하는 중입니다..."):
+        if st.button("법령 추적 시작"):
+        with st.spinner("법령을 추적하는 중입니다..."):
         mst_id = law_dict[selected_law]
         new_text = fetch_law_text(mst_id)
 
