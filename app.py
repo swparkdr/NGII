@@ -40,12 +40,25 @@ def load_law_text(name):
             return f.read()
     return None
 
-# 개정 요약 (간이 버전)
+# ✅ 개정일 추출
+def extract_amendment_date(text):
+    soup = BeautifulSoup(text, "xml")
+    date_tag = soup.find('시행일자')
+    if date_tag:
+        return date_tag.get_text(strip=True)
+    return datetime.datetime.today().strftime("%Y-%m-%d")
+
+# ✅ 고급 요약 (조문내용 없을 시, 조문 or 본문 사용)
 def summarize_law(text):
     soup = BeautifulSoup(text, "xml")
     articles = soup.find_all('조문내용')
+    if not articles:
+        articles = soup.find_all('조문')
+    if not articles:
+        articles = soup.find_all('본문')
+
     summary = []
-    for article in articles[:3]:  # 처음 3개 조문만 요약
+    for article in articles[:3]:
         content = article.get_text(strip=True)
         if content:
             summary.append(content[:100] + "...")
@@ -79,13 +92,13 @@ def generate_email_message(law_name, date, summary, impact, action):
 - 조치사항: {action}
 """
 
-st.set_page_config(page_title="NGII Law Keeper - 자동화 확장 버전", layout="wide")
-st.title("📚 NGII Law Keeper - 법령 자동화 확장 버전")
+st.set_page_config(page_title="NGII Law Keeper - 고급 버전", layout="wide")
+st.title("📚 NGII Law Keeper - 고급 버전")
 
 option = st.radio("🔎 추적할 항목을 선택하세요:", ("법령 추적", "행정규칙 추적"))
 
 if option == "법령 추적":
-    st.subheader("📜 법령 추적 (자동 요약 + 영향 분석)")
+    st.subheader("📜 법령 추적 (고급 요약 + 개정일 추출)")
     selected_law = st.selectbox("법령 선택", list(law_dict.keys()))
 
     if st.button("법령 추적 시작"):
@@ -95,7 +108,6 @@ if option == "법령 추적":
 
             if new_text:
                 old_text = load_law_text(selected_law)
-                today = datetime.datetime.today().strftime("%Y-%m-%d")
 
                 changed = False
                 if old_text:
@@ -110,7 +122,8 @@ if option == "법령 추적":
                     save_law_text(selected_law, new_text)
                     st.info("✅ 본문 저장 완료. 다음 추적부터 비교가 가능합니다.")
 
-                # ✅ 변경 여부와 상관없이 항상 요약, 분석, 이메일 생성
+                # ✅ 고급 기능: 진짜 개정일 추출 + 고급 요약
+                amendment_date = extract_amendment_date(new_text)
                 summary = summarize_law(new_text)
                 impact = check_internal_impact(summary)
                 action = recommend_action(impact, changed)
@@ -118,13 +131,13 @@ if option == "법령 추적":
                 st.markdown("### 📋 법령 개정 요약")
                 st.table({
                     "법령명": [selected_law],
-                    "개정일": [today],
+                    "개정일": [amendment_date],
                     "주요 개정 내용": [summary],
                     "내부 규정 영향 여부": [impact],
                     "필요한 조치": [action]
                 })
 
-                email_message = generate_email_message(selected_law, today, summary, impact, action)
+                email_message = generate_email_message(selected_law, amendment_date, summary, impact, action)
                 st.markdown("### 📧 이메일용 메시지")
                 st.code(email_message, language="text")
 
