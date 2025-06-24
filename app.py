@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 import os
 
 API_KEY = "lhs0623"
+
+# 추적할 법령 키워드 리스트
 target_laws = [
     "공간정보의 구축 및 관리 등에 관한 법률",
     "공간정보의 구축 및 관리 등에 관한 법률 시행령",
@@ -14,14 +16,18 @@ target_laws = [
     "공간정보산업 진흥법 시행규칙"
 ]
 
-# 1. API에서 지원 법령 목록 가져오기
+# 법령 목록 가져오기
 def fetch_law_list():
     url = f"https://www.law.go.kr/DRF/lawSearch.do?OC={API_KEY}&target=law&type=XML"
     response = requests.get(url)
-    soup = BeautifulSoup(response.text, "xml")
-    return soup.find_all("law")
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, "xml")
+        return soup.find_all("law")
+    else:
+        print("❌ 법령 목록 불러오기 실패.")
+        return []
 
-# 2. 법령 본문 가져오기
+# 본문 가져오기
 def fetch_law_text(mst_id):
     url = f"https://www.law.go.kr/DRF/lawService.do?OC={API_KEY}&target=law&type=XML&mst={mst_id}"
     response = requests.get(url)
@@ -29,11 +35,12 @@ def fetch_law_text(mst_id):
         return response.text
     return None
 
-# 3. 파일 저장 및 비교
+# 파일 저장
 def save_law_text(name, text):
     with open(f"{name}_law.txt", "w", encoding="utf-8") as f:
         f.write(text)
 
+# 파일 불러오기
 def load_law_text(name):
     file_path = f"{name}_law.txt"
     if os.path.exists(file_path):
@@ -41,20 +48,36 @@ def load_law_text(name):
             return f.read()
     return None
 
-# 4. 요약 (간단 비교용)
+# 간단 요약 (추후 고도화 가능)
 def summarize_law(text):
     soup = BeautifulSoup(text, "xml")
     try:
         law_name = soup.find("법령명").text.strip()
         law_date = soup.find("시행일자").text.strip()
-        return law_name, law_date, "자동 요약 준비 중"
+        return law_name, law_date, "요약 준비 중"
     except:
         return "Unknown", "Unknown", "요약 불가"
 
-# 5. 메인 로직
+# 메인 추적기
 def track_laws():
+    print("\n📥 법령 목록 불러오는 중...")
     law_list = fetch_law_list()
-    tracked_laws = {law.find("법령명한글").text.strip(): law.find("법령일련번호").text.strip() for law in law_list if law.find("법령명한글").text.strip() in target_laws}
+    print(f"📄 총 {len(law_list)}건의 법령을 불러왔습니다.")
+
+    tracked_laws = {}
+
+    for law in law_list:
+        law_name = law.find("법령명한글").text.strip()
+        mst_id = law.find("법령일련번호").text.strip()
+
+        if any(target in law_name for target in target_laws):
+            tracked_laws[law_name] = mst_id
+
+    print(f"🔎 추적할 법령 수: {len(tracked_laws)}")
+
+    if len(tracked_laws) == 0:
+        print("⚠️ 필터링된 법령이 없습니다. 키워드를 다시 확인하세요.")
+        return
 
     for law_name, mst_id in tracked_laws.items():
         print(f"\n📋 {law_name} 추적 중...")
@@ -73,9 +96,10 @@ def track_laws():
                 else:
                     print(f"✅ {law_name} 변경 사항 없음.")
             else:
-                print(f"📂 {law_name} 첫 저장.")
+                print(f"📂 {law_name} 첫 저장 완료.")
                 save_law_text(law_name, new_text)
         else:
             print(f"❌ {law_name} 본문 불러오기 실패.")
 
-track_laws()
+if __name__ == "__main__":
+    track_laws()
