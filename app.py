@@ -101,10 +101,14 @@ if option == "법령 추적":
     st.subheader("📜 법령 추적 (고급 요약 + 개정일 추출)")
     selected_law = st.selectbox("법령 선택", list(law_dict.keys()))
 
-    if st.button("법령 추적 시작"):
-        with st.spinner("법령을 추적하는 중입니다..."):
-            mst_id = law_dict[selected_law]
-            new_text = fetch_law_text(mst_id)
+   if st.button("법령 추적 시작"):
+    with st.spinner("법령을 추적하는 중입니다..."):
+        mst_id = law_dict[selected_law]
+        new_text = fetch_law_text(mst_id)
+
+        if new_text:
+            st.markdown("### 📄 API 응답 원본 (일부)")
+            st.code(new_text[:2000])  # 처음 2000자 출력 (전체는 너무 많을 수 있어서)
 
             if new_text:
                 old_text = load_law_text(selected_law)
@@ -143,3 +147,4 @@ if option == "법령 추적":
 
             else:
                 st.error("❌ 법령 본문을 불러오지 못했습니다.")
+    
