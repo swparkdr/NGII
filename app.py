@@ -59,11 +59,14 @@ def check_internal_impact(summary):
     return "No"
 
 # 조치사항 추천
-def recommend_action(impact):
-    if impact == "Yes":
-        return "내부 지침 개정 필요, 담당자 알림 요망"
+def recommend_action(impact, changed):
+    if changed:
+        if impact == "Yes":
+            return "내부 지침 개정 필요, 담당자 알림 요망"
+        else:
+            return "담당자 알림 (참고용)"
     else:
-        return "담당자 알림 (참고용)"
+        return "변경 사항 없음 (지속 모니터링)"
 
 # 이메일 메시지 생성
 def generate_email_message(law_name, date, summary, impact, action):
@@ -92,38 +95,38 @@ if option == "법령 추적":
 
             if new_text:
                 old_text = load_law_text(selected_law)
+                today = datetime.datetime.today().strftime("%Y-%m-%d")
 
+                changed = False
                 if old_text:
                     if old_text != new_text:
+                        changed = True
                         st.error(f"🚨 {selected_law}에 변경 사항이 있습니다!")
                         save_law_text(selected_law, new_text)
-
-                        # 추가된 자동화 작업
-                        today = datetime.datetime.today().strftime("%Y-%m-%d")
-                        summary = summarize_law(new_text)
-                        impact = check_internal_impact(summary)
-                        action = recommend_action(impact)
-
-                        # 결과 표 출력
-                        st.markdown("### 📋 법령 개정 요약")
-                        st.table({
-                            "법령명": [selected_law],
-                            "개정일": [today],
-                            "주요 개정 내용": [summary],
-                            "내부 규정 영향 여부": [impact],
-                            "필요한 조치": [action]
-                        })
-
-                        # 이메일 메시지 출력
-                        email_message = generate_email_message(selected_law, today, summary, impact, action)
-                        st.markdown("### 📧 이메일용 메시지")
-                        st.code(email_message, language="text")
-
                     else:
                         st.info(f"✅ {selected_law}에 변경 사항이 없습니다.")
                 else:
                     st.warning("📂 이전 본문이 없습니다. 이번 본문을 기준으로 저장합니다.")
                     save_law_text(selected_law, new_text)
                     st.info("✅ 본문 저장 완료. 다음 추적부터 비교가 가능합니다.")
+
+                # ✅ 변경 여부와 상관없이 항상 요약, 분석, 이메일 생성
+                summary = summarize_law(new_text)
+                impact = check_internal_impact(summary)
+                action = recommend_action(impact, changed)
+
+                st.markdown("### 📋 법령 개정 요약")
+                st.table({
+                    "법령명": [selected_law],
+                    "개정일": [today],
+                    "주요 개정 내용": [summary],
+                    "내부 규정 영향 여부": [impact],
+                    "필요한 조치": [action]
+                })
+
+                email_message = generate_email_message(selected_law, today, summary, impact, action)
+                st.markdown("### 📧 이메일용 메시지")
+                st.code(email_message, language="text")
+
             else:
                 st.error("❌ 법령 본문을 불러오지 못했습니다.")
