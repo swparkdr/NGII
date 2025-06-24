@@ -25,7 +25,6 @@ rule_list = [
     "3차원국토공간정보구축작업규정"
 ]
 
-# 행정규칙 크롤링 함수
 def crawl_rule_info(rule_name):
     url = "https://www.law.go.kr/admRulSc.do"
     params = {"query": rule_name}
@@ -56,23 +55,23 @@ def load_history(name):
             return f.read()
     return None
 
-st.set_page_config(page_title="NGII Law Keeper - 링크 기반", layout="wide")
-st.title("📚 NGII Law Keeper - 링크 기반 경량화 버전")
+st.set_page_config(page_title="NGII Law Keeper - 링크 버튼 버전", layout="wide")
+st.title("📚 NGII Law Keeper - 링크 버튼 통합 버전")
 
 option = st.radio("🔎 추적할 항목을 선택하세요:", ("법령 추적", "행정규칙 추적"))
 
 if option == "법령 추적":
-    st.subheader("📜 법령 추적 (링크 기반)")
+    st.subheader("📜 법령 추적 (링크 버튼 제공)")
     selected_law = st.selectbox("법령 선택", list(law_dict.keys()))
 
     if st.button("법령 추적 시작"):
         with st.spinner("법령을 추적하는 중입니다..."):
             law_url = f"https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq={law_dict[selected_law]}"
             st.success(f"✅ {selected_law} 추적이 완료되었습니다!")
-            st.write(f"🔗 [국가법령정보센터 바로가기]({law_url})")
+            st.link_button(label="📄 본문 링크 열기", url=law_url)
 
 elif option == "행정규칙 추적":
-    st.subheader("📑 행정규칙 추적 (링크 기반)")
+    st.subheader("📑 행정규칙 추적 (링크 버튼 제공)")
     selected_rule = st.selectbox("행정규칙 선택", rule_list)
 
     if st.button("행정규칙 추적 시작"):
@@ -87,7 +86,7 @@ elif option == "행정규칙 추적":
                     if old_history != new_history:
                         st.error(f"🚨 {selected_rule}에 변경 사항이 있습니다!")
                         st.write(f"🔸 최신 연혁: {new_history}")
-                        st.write(f"🔗 [국가법령정보센터 바로가기]({result['url']})")
+                        st.link_button(label="📄 본문 링크 열기", url=result['url'])
                         save_history(selected_rule, new_history)
                     else:
                         st.info(f"✅ {selected_rule}에 변경 사항이 없습니다. (표시 생략)")
