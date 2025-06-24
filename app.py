@@ -92,25 +92,27 @@ def generate_email_message(law_name, date, summary, impact, action):
 - 조치사항: {action}
 """
 
-st.set_page_config(page_title="NGII Law Keeper - 고급 버전", layout="wide")
-st.title("📚 NGII Law Keeper - 고급 버전")
+# Streamlit 시작
+st.set_page_config(page_title="NGII Law Keeper - 고급 디버깅 버전", layout="wide")
+st.title("📚 NGII Law Keeper - 고급 디버깅 버전")
 
 option = st.radio("🔎 추적할 항목을 선택하세요:", ("법령 추적", "행정규칙 추적"))
 
 if option == "법령 추적":
-    st.subheader("📜 법령 추적 (고급 요약 + 개정일 추출)")
+    st.subheader("📜 법령 추적 (고급 요약 + 개정일 추출 + 디버깅)")
+
     selected_law = st.selectbox("법령 선택", list(law_dict.keys()))
 
-        if st.button("법령 추적 시작"):
+    if st.button("법령 추적 시작"):
         with st.spinner("법령을 추적하는 중입니다..."):
-        mst_id = law_dict[selected_law]
-        new_text = fetch_law_text(mst_id)
-
-        if new_text:
-            st.markdown("### 📄 API 응답 원본 (일부)")
-            st.code(new_text[:2000])  # 처음 2000자 출력 (전체는 너무 많을 수 있어서)
+            mst_id = law_dict[selected_law]
+            new_text = fetch_law_text(mst_id)
 
             if new_text:
+                # ✅ API 응답 전체 출력 (디버깅용)
+                st.markdown("### 📄 API 응답 원본 (전체)")
+                st.code(new_text)  # 전체 XML 출력
+
                 old_text = load_law_text(selected_law)
 
                 changed = False
@@ -132,6 +134,7 @@ if option == "법령 추적":
                 impact = check_internal_impact(summary)
                 action = recommend_action(impact, changed)
 
+                # ✅ 표 출력
                 st.markdown("### 📋 법령 개정 요약")
                 st.table({
                     "법령명": [selected_law],
@@ -141,10 +144,10 @@ if option == "법령 추적":
                     "필요한 조치": [action]
                 })
 
+                # ✅ 이메일 메시지 출력
                 email_message = generate_email_message(selected_law, amendment_date, summary, impact, action)
                 st.markdown("### 📧 이메일용 메시지")
                 st.code(email_message, language="text")
 
             else:
                 st.error("❌ 법령 본문을 불러오지 못했습니다.")
-    
