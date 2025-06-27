@@ -2,6 +2,7 @@ import os
 import requests
 from bs4 import BeautifulSoup
 import streamlit as st
+from datetime import datetime
 
 API_KEY = "lhs0623"
 
@@ -76,8 +77,8 @@ def load_law_text(name):
             return f.read()
     return None
 
-st.set_page_config(page_title="NGII Law Keeper - 변경 내역 표 버전", layout="wide")
-st.title("📚 NGII Law Keeper - 변경 내역 표 버전")
+st.set_page_config(page_title="NGII Law Keeper - 변경 내역 시간 포함 버전", layout="wide")
+st.title("📚 NGII Law Keeper - 변경 내역 시간 포함 버전")
 
 if "change_log" not in st.session_state:
     st.session_state.change_log = []
@@ -85,7 +86,7 @@ if "change_log" not in st.session_state:
 option = st.radio("🔎 추적할 항목을 선택하세요:", ("법령 추적", "행정규칙 추적"))
 
 if option == "법령 추적":
-    st.subheader("📜 법령 추적 (변경 여부만 표시)")
+    st.subheader("📜 법령 추적 (변경 여부 + 시간 표시)")
     selected_law = st.selectbox("법령 선택", list(law_dict.keys()))
 
     if st.button("법령 추적 시작"):
@@ -100,7 +101,11 @@ if option == "법령 추적":
                     if old_text != new_text:
                         st.error(f"🚨 {selected_law}에 변경 사항이 있습니다!")
                         save_law_text(selected_law, new_text)
-                        st.session_state.change_log.append({"구분": "법령", "명칭": selected_law})
+                        st.session_state.change_log.append({
+                            "구분": "법령",
+                            "명칭": selected_law,
+                            "변경 시각": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        })
                     else:
                         st.info(f"✅ {selected_law}에 변경 사항이 없습니다.")
                 else:
@@ -111,7 +116,7 @@ if option == "법령 추적":
                 st.error("❌ 법령 본문을 불러오지 못했습니다.")
 
 elif option == "행정규칙 추적":
-    st.subheader("📑 행정규칙 추적 (User-Agent 적용)")
+    st.subheader("📑 행정규칙 추적 (변경 여부 + 시간 표시)")
     selected_rule = st.selectbox("행정규칙 선택", rule_list)
 
     if st.button("행정규칙 추적 시작"):
@@ -126,7 +131,11 @@ elif option == "행정규칙 추적":
                     if old_history != new_history:
                         st.error(f"🚨 {selected_rule}에 변경 사항이 있습니다!")
                         save_history(selected_rule, new_history)
-                        st.session_state.change_log.append({"구분": "행정규칙", "명칭": selected_rule})
+                        st.session_state.change_log.append({
+                            "구분": "행정규칙",
+                            "명칭": selected_rule,
+                            "변경 시각": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        })
                     else:
                         st.info(f"✅ {selected_rule}에 변경 사항이 없습니다.")
                 else:
@@ -137,5 +146,5 @@ elif option == "행정규칙 추적":
                 st.error("❌ 행정규칙을 불러오지 못했습니다.")
 
 if st.session_state.change_log:
-    st.subheader("📋 변경 내역")
+    st.subheader("📋 변경 내역 (변경 시각 포함)")
     st.table(st.session_state.change_log)
