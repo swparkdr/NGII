@@ -1,3 +1,4 @@
+
 import os
 import requests
 from bs4 import BeautifulSoup
@@ -24,7 +25,6 @@ rule_list = [
     "3차원국토공간정보구축작업규정"
 ]
 
-# 행정규칙 크롤링 (User-Agent 적용)
 def crawl_rule_info(rule_name):
     url = "https://www.law.go.kr/admRulSc.do"
     params = {"query": rule_name}
@@ -47,7 +47,6 @@ def crawl_rule_info(rule_name):
 
     return {"name": title, "history": history}
 
-# 법령 본문 API
 def fetch_law_text(mst_id):
     url = f"https://www.law.go.kr/DRF/lawService.do?OC={API_KEY}&target=law&type=XML&mst={mst_id}"
     response = requests.get(url)
