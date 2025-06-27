@@ -79,12 +79,12 @@ def load_law_text(name):
     return None
 
 st.set_page_config(page_title="NGII Law Keeper - User-Agent 버전", layout="wide")
-st.title("\ud83d\udcda NGII Law Keeper - User-Agent 적용 최종 버전")
+st.title("📚 NGII Law Keeper - User-Agent 적용 최종 버전")
 
-option = st.radio("\ud83d\udd0e 추적할 항목을 선택하세요:", ("법령 추적", "행정규칙 추적"))
+option = st.radio("🔎 추적할 항목을 선택하세요:", ("법령 추적", "행정규칙 추적"))
 
 if option == "법령 추적":
-    st.subheader("\ud83d\udcdc 법령 추적 (변경 여부만 표시)")
+    st.subheader("📜 법령 추적 (변경 여부만 표시)")
     selected_law = st.selectbox("법령 선택", list(law_dict.keys()))
 
     if st.button("법령 추적 시작"):
@@ -97,19 +97,19 @@ if option == "법령 추적":
 
                 if old_text:
                     if old_text != new_text:
-                        st.error(f"\ud83d\udea8 {selected_law}에 변경 사항이 있습니다!")
+                        st.error(f"🚨 {selected_law}에 변경 사항이 있습니다!")
                         save_law_text(selected_law, new_text)
                     else:
-                        st.info(f"\u2705 {selected_law}에 변경 사항이 없습니다.")
+                        st.info(f"✅ {selected_law}에 변경 사항이 없습니다.")
                 else:
-                    st.warning("\ud83d\udcc2 이전 본문이 없습니다. 이번 본문을 기준으로 저장합니다.")
+                    st.warning("📂 이전 본문이 없습니다. 이번 본문을 기준으로 저장합니다.")
                     save_law_text(selected_law, new_text)
-                    st.info("\u2705 본문 저장 완료. 다음 추적부터 비교가 가능합니다.")
+                    st.info("✅ 본문 저장 완료. 다음 추적부터 비교가 가능합니다.")
             else:
-                st.error("\u274c 법령 본문을 불러오지 못했습니다.")
+                st.error("❌ 법령 본문을 불러오지 못했습니다.")
 
 elif option == "행정규칙 추적":
-    st.subheader("\ud83d\udcc1 행정규칙 추적 (User-Agent 적용)")
+    st.subheader("📑 행정규칙 추적 (User-Agent 적용)")
     selected_rule = st.selectbox("행정규칙 선택", rule_list)
 
     if st.button("행정규칙 추적 시작"):
@@ -122,13 +122,13 @@ elif option == "행정규칙 추적":
 
                 if old_history:
                     if old_history != new_history:
-                        st.error(f"\ud83d\udea8 {selected_rule}에 변경 사항이 있습니다!")
+                        st.error(f"🚨 {selected_rule}에 변경 사항이 있습니다!")
                         save_history(selected_rule, new_history)
                     else:
-                        st.info(f"\u2705 {selected_rule}에 변경 사항이 없습니다.")
+                        st.info(f"✅ {selected_rule}에 변경 사항이 없습니다.")
                 else:
-                    st.warning("\ud83d\udcc2 이전 이력이 없습니다. 이번 이력을 기준으로 저장합니다.")
+                    st.warning("📂 이전 이력이 없습니다. 이번 이력을 기준으로 저장합니다.")
                     save_history(selected_rule, new_history)
-                    st.info("\u2705 이력 저장 완료. 다음 추적부터 비교가 가능합니다.")
+                    st.info("✅ 이력 저장 완료. 다음 추적부터 비교가 가능합니다.")
             else:
-                st.error("\u274c 행정규칙을 불러오지 못했습니다.")
+                st.error("❌ 행정규칙을 불러오지 못했습니다.")
